@@ -1,0 +1,275 @@
+#!/usr/bin/python
+
+import sys
+import time
+import os
+import re
+import pwd
+import subprocess
+import socket
+import argparse
+from string import find
+from datetime import date
+
+
+###############################
+# copies a file if needed     #
+###############################
+def copyifneeded(localfile,remotefile):
+  if(os.path.isfile(localfile)):
+    return
+  print("\nCopying {0} to local directory".format(str(localfile)))
+  cmd = ["cp", str(remotefile), str(localfile) ]
+  subprocess.call(cmd)
+
+
+success="It Passed or Failed when it should"
+
+class student:
+  def __init__(self):
+    name=""
+    last4=""
+
+files = []
+students = []
+resfile=0
+
+def getfiles(fn):
+  files.append("tb.sv")
+    
+def getstudents(fn):
+  if(os.path.isfile(fn)):
+    fs = open(fn,"r")
+    for ln in fs.readlines():
+      recs=ln.split("^")
+      stud = student()
+      stud.name=recs[1]
+      stud.last4=recs[2]
+      students.append(stud)
+    fs.close()
+  else:
+    fs = open(fn,"w")
+    namex = raw_input( "\n\nEnter student Name ").strip()
+    last4 = raw_input("Enter the last 4 of the SJSU ID ").strip()
+    fs.write("^{0}^{1}^\n".format(namex,last4))
+    stud = student()
+    stud.name = namex
+    stud.last4 = last4
+    students.append(stud)
+    fs.close()
+
+###################################################
+# Create a verilog wrapper
+###################################################
+def makewrap(fn,tn):
+    ft = open(fn,"w")
+    ft.write("""//
+// This is a simple wrapper to map the interface to the DUT.
+// This also is a good place to put assertions and covergroups
+//
+
+module wrap(alu_if.dut_mp q);
+
+
+alu{0} a(q.clk,q.rst,q.pushin,q.stopout,
+    q.ctl,q.a,q.b,q.ci,q.pushout,q.cout,q.z,q.stopin);
+
+
+endmodule
+""".format(tn))
+    ft.close()
+  
+###################################################
+# create the test bench                           #
+###################################################
+def maketb(tbname,debug,acd):
+  if acd=="" :
+      afn="alu.sv"
+  else :
+      afn ="alu{0}.svp".format(acd)
+  copyifneeded(afn,"/home/morris/279/HW1/{0}".format(afn))
+  ft = open(tbname,"w")
+  ft.write("""
+//
+// Hacked up getting to an interface
+//
+`timescale 1ns/10ps
+
+`include "if.sv"
+`include "{0}"
+`include "wrap.sv"
+
+package alu_pkg;
+""".format(afn))
+  if afn=="alu.sv" :
+    ft.write("""
+`include "uvm.sv"
+""")
+  ft.write("""
+import uvm_pkg::*;
+
+`include "t0.sv"
+
+endpackage: alu_pkg
+
+
+module top_tb;
+
+import uvm_pkg::*;
+import alu_pkg::*;
+
+alu_if ALU();
+
+// Free running clock
+initial
+  begin
+    ALU.clk = 0;
+    forever begin
+      #5 ALU.clk = ~ALU.clk;
+    end
+  end
+
+// starts up. Note setting alu into the configuration data base.
+initial
+  begin
+    #0;
+    uvm_config_db #(virtual alu_if)::set(null, "uvm_test_top", "alu_if" , ALU);
+    run_test("alu_test");
+    #100;
+    $finish;
+  end
+  
+// Dump waves
+  initial begin
+""".format(afn))
+  if debug :
+    ft.write("""
+    $dumpfile("alu.vcd");
+    $dumpvars(0, top_tb);
+""")
+  ft.write("""
+  end
+
+// set up the DUT
+
+wrap a(ALU.dut_mp);
+
+endmodule: top_tb
+""")  
+  ft.close()
+
+####################################
+# checks to see if a file contains #
+# any substrings passed            #
+####################################
+def filehasany(fn,stx):
+  rv = False
+  if(os.path.isfile(fn)):
+    fw = open(fn,"r")
+    for ln in fw.readlines():
+      for sub in stx:
+        if( find(ln.lower(),sub)>= 0 ):
+          print "-->",ln.strip(),"<--"
+          rv=True
+  return rv
+
+###############################
+# checks to see if a file has #
+# a string                    #
+###############################
+def filehas(fn,stx):
+  if(os.path.isfile(fn)):
+    fw = open(fn,"r")
+    for ln in fw.readlines():
+      if( find(ln,stx)>=0 ):
+        print "-->",ln.strip(),"<--"
+        fw.close()
+        return True
+    fw.close()
+  return False
+##############################
+# run vcs simulation         #
+##############################
+
+copyifneeded("saywhat.so","/home/morris/279/HW1/saywhat.so")
+import saywhat
+
+def runvcs(debopt,tn):
+  deb=1 if(debopt) else 0
+  maketb("tb.sv",deb,tn)
+  makewrap("wrap.sv",tn)
+  if tn=="" :
+    subprocess.call(["rm","-rf","simres.txt","simv"])
+  subprocess.call(["csh","-c","echo '---->>>> Test case {0} <<<<---- ' >> simres.txt".format(tn)])
+  subprocess.call(["csh","-c","./sv_uvm tb.sv >> simres.txt"])
+  return saywhat.saywhat(tn)
+
+####################################
+# The main routine                 #
+####################################
+def mainx():
+  clkperiod=10.0
+  resfn="results.txt"
+
+  parser = argparse.ArgumentParser(description='ALU TB homework')
+  parser.add_argument("-d","--debug",dest="debug",default=False,help="Debug mode",action="store_true")
+  parser.add_argument("resultsFileName",default="results.txt")
+  args = parser.parse_args()
+  print args
+#  return
+  if(find(args.resultsFileName,".v")>0 or args.resultsFileName.find(".sv")>0):
+    print("the second argument should be the result name\n")
+    print("Not a design file name")
+    return
+  resfn=args.resultsFileName
+  clkperiod=10.0
+  global resfile
+  resfile = open(resfn,"w")
+  resfile.write("alu script run started on {0}\n".format(str(time.asctime())))
+  resfile.write("run on machine {0}\n\n".format(socket.gethostname()))
+  resfile.write("Run with a clock period of {0}\n".format(clkperiod));
+  
+  getstudents("names.txt")
+  print "student names "
+  resfile.write("student names\n");
+  for sx in students:
+    print " ",sx.name,sx.last4
+    resfile.write("  {0}  {1}\n".format(sx.name,sx.last4))
+  getfiles("files.txt")
+  print "user design files"
+  for sx in files:
+    print " ",sx
+  copyifneeded("sv_uvm","/home/morris/279/HW1/sv_uvm")
+  copyifneeded("dothing.so","/home/morris/pid/dothing.so")
+  copyifneeded("if.sv","/home/morris/279/HW1/if.sv")
+  copyifneeded("t0.sv","/home/morris/279/HW1/t0.sv")
+  import dothing
+  sadness=False
+  test_results=[]
+  if not runvcs(args.debug,"") :
+    print("Normal alu failed the testbench")
+    resfile.write("----->Base case didn't work <--------\n")
+    test_results.append(["Bad","Normal alu"])
+    sadness=True
+  else :
+    test_results.append(["OK ","Normal alu"])
+  for i in range(10):
+      if not runvcs(args.debug,i):
+          print("\n\nSimulation case {0} failed\n\n".format(i))
+          resfile.write("----->{0} didn't work <--------\n".format(i))
+          sadness=True
+          test_results.append(["Bad","Case {0}".format(i)])
+      else :
+          test_results.append(["OK ","Case {0}".format(i)])
+  print("\n\n\n")
+  for q in test_results :
+      print("{0} {1}".format(q[0],q[1]))
+      resfile.write("{0} {1}\n".format(q[0],q[1]))
+  if sadness :
+      print("Keep at it, don't give up \n")
+      sys.exit(99)
+  dothing.dothing(resfile)
+  print("\n\n\nCompleted the alu run\n\n")
+  resfile.close()
+
+mainx()
