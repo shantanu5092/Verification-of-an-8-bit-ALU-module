@@ -10,3 +10,5 @@ Salient features:
 3. Different sequences were generated to detect the faulty ALU DUT (Design Under Test). 
 
 4. The design is highly reusable.
+
+Some of the files from "faulty DUTs" are encrypted and are not visible to the user.
