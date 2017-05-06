@@ -1,0 +1,70 @@
+//
+// This is a simple little ALU to demonstrate some things about UVM
+// It has some bugs added so the test can find something
+//
+// ctl
+// 00   a
+// 01   add
+// 10   sub
+// 11   mult (cout is bit 8 of result).
+
+
+
+module alu7(input clk, input rst, input pushin, output stopout, input [1:0] ctl, input [7:0] a, input [7:0] b,
+        input ci, output pushout, output cout, output [7:0] z, input stopin);
+        
+reg p1,p1_d,ci1,ci1_d,cout2;
+reg [7:0] a1,b1,z1,a1_d,b1_d;
+reg [1:0] ctl1,ctl1_d;
+
+logic recirculate;
+logic [8:0] res;
+
+assign z = res[7:0];
+assign cout = res[8];
+assign pushout = p1;
+assign stopout = p1 ==1 && stopin==1;
+
+
+always @(*) begin
+   recirculate = p1==1 && stopin==1;
+   if(recirculate) begin
+     p1_d = p1;
+     a1_d = a1;
+     b1_d = b1;
+     ci1_d = ci1;
+     ctl1_d = ctl1;
+   end else begin
+     p1_d = pushin;
+     a1_d = a;
+     b1_d = b;
+     ci1_d = ci;
+     ctl1_d = ctl;
+   end
+   case(ctl1)
+     0: res = {1'b0,b1};
+     1: res = a1+b1+{8'b0,ci1};
+     2: res = a1-b1+{8'b0,ci1};
+     3: res = a1*b1;
+   endcase
+   
+end
+
+always @(posedge(clk) or posedge(rst)) begin
+  if(rst) begin
+    p1 <= 0;
+    a1 <= 0;
+    b1 <= 0;
+    ci1 <= 0;
+    ctl1 <= 0;
+  end else begin
+    p1 <= #1 p1_d;
+    a1 <= #1 a1_d;
+    b1 <= #1 b1_d;
+    ci1 <= #1 ci1_d;
+    ctl1 <= #1 ctl1_d;
+  end
+end
+        
+        
+endmodule

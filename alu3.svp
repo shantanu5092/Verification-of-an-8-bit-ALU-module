@@ -1,0 +1,41 @@
+//
+// This is a simple little ALU to demonstrate some things about UVM
+// It has some bugs added so the test can find something
+//
+// ctl
+// 00   a
+// 01   add
+// 10   sub
+// 11   mult (cout is bit 8 of result).
+
+
+
+module alu3(input clk, input rst, input pushin, output stopout, input [1:0] ctl, input [7:0] a, input [7:0] b,
+        input ci, output pushout, output cout, output [7:0] z, input stopin);
+`protected
+Bd??N<6CQR3L<PJgDKK1UP66UQ_[M9U7;CQW5eF5TI+O(0,0RWJZ/)H0<U&T]\Qa
+AgC/>cO/?61]\4TGSb01-C/9D;Y)cJ0^Sb-SS5X&KEEKO>\PS]eCN1?G3N,\+O4B
+809AS+g#I,I)9ER4bD_2M3P[/=#9^OQBaVf>]dJYYd(K<M;dWC.0_e/>F5_Y)E?5
+ATR\#?b;c9SB\HPVS+LTRD7=VKLZ;G\,8-XP>-FL7c\G1,=ORVXP_@1ZbH+:9OZ6
+<9(aO)C7:W>4/?[b(9b=N+H&9ULU^<Ze@D5+3S(\f/UIFI092YZ-3MYE7d1[.Q:J
+<GggE+CNC87WBL19,;e:1>>C#WGd)A/+f^0\6\#SgI7MVcVRC;GM<2]cW5:>Cc-Q
+W2SG.9ga[)K+\<dQWRKBIY01SfV_>V/;P-#DG^c@aF=&<aXTgAT0V4)dB#<(V6gc
+A5e67U+^5V&/&Qb<PRUdY3-,g24R((>;T=c9#[fJA_;_E<N(6G45.W_\CT-39R#G
+DfN#5@4AaT\f6<:XP,SGNd1IP7:e75=HS7:f+9P7NOA9/AFPUWI<+Db;b:9AZ(a1
+]\R?DAc#-T/VIDW=JbS]4Rb;<3O#dKNgC[BV=IE0b#=,OQ+DR;WQ6,1K_;\R;+>.
+EQ9P.LL<>HAIWP/b;XW&+==<^S#BH,6XeJdNBE2aS7>E#=8)>17I(\PER<B<87XD
+I(GF9F4]\>G+>_@/-_4V)b,Y48WLMCNBG;HF6@:/e3X\WL)fVO/MXKN/fKd_7Ug;
+)a>Ue,5O:3dKeAdSE^G2RQH:7M[U4&_U(g6#+35I13#V_,R-)fbafd<bV1QC:6S/
+X)+:I.W6Q7QTFF@_\#)ZON\4fQBAaFWUJ+Q)FcX#IX8?b)U,S47RXT0gBSP(CG/J
+fNN)X4K11&ZcLYPBDg,MSC^24X(^J6,+PSOV]\Q=A&P#[^O>A7>-1./fP9SO;)P+
+N&V6bT6aMLaRR)L4.dYRb319L01?^+BSLI(c0@c>:3M36/c;K5JQ)8LNaT3PeZJ8
+A5MQ=]YH-@SfcOV@a89WW3C+W5)?d?f64##A.DaVI-4Z5<GP4fNV6-(3LU2ZZEfT
+c]=E^Y=KWS#PK(7G)@CHJL]VV6bLd0P4G)(<M-WKI/6:f>01A(XZG9CT)_-.2[_d
+[W:&6#1MDgdY<9VP=YE&d_+3_.;J7+\HV6e;5QFg8,5dRb+dYO&e:C\(A\?Z-##4
+T<U)Cge]AgPWL[P7F7F@Bg(>(();-G07<#^Q96VfIIS:d5K=BFJ+(Z&\c^)bA^&f
+b>ZAQ;WPUQ1_K<S0-X?AL&[Q1BO&=JFU)&0Z9(:A49)bWa91d?-664RfGA)#3aca
+aOH^7M],A3H_0$
+`endprotected
+        
+        
+endmodule
